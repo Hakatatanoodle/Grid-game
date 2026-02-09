@@ -4,20 +4,28 @@ Turn based Grid game
 #include<iostream>
 #include<vector>
 #include<string>
+#include<limits>
 
+//enum to define the result of movement 
+enum MovementResult
+{
+  MOVED,
+  BLOCKEDBYWALL,
+  BLOCKEDBYBOUNDS
+};
 //constants
-
-constexpr int gridWidth = 10;
-constexpr int gridHeight = 10;
-
-
 
 //function prototypes
 void drawGrid(const std::vector<std::string>& grid);
+
+enum MovementResult movementResolver(const std::vector<std::string>&,const std::string&,int& playerX,int& playerY);
+
 int main()
-{
+{ 
+  MovementResult mvr ;
   int playerX=-1,playerY=-1;
   bool found=false;//flag to check if player is found or not
+  bool gameEnd = false;
   std::vector<std::string> grid = 
   {
     "############",
@@ -64,6 +72,30 @@ int main()
   //reinserting the player (modify the vector and reprint the gird)
   grid[playerY][playerX] = 'P';
   drawGrid(grid);
+
+  std::string input;
+  std::cout << "W A S D " ;
+  std::cin >> input;
+  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+  //GAME LOOP 
+    while(input!= "exit" && !gameEnd)
+    {
+      mvr = movementResolver(grid,input,playerX,playerY);
+      if(mvr == MOVED)
+      {
+        continue;
+      }
+      else if(mvr==BLOCKEDBYWALL)
+      {
+        printf("Blocked By wall!");
+      }
+      else if(mvr==BLOCKEDBYBOUNDS)
+      {
+        printf("Bloced by bounds");
+      }
+
+    }
   return 0;
 }
 
@@ -74,4 +106,48 @@ void drawGrid(const std::vector<std::string>& grid)
   {
     std::cout << row<< std::endl;  
   }
+}
+
+//function to resolve movement
+enum MovementResult movementResolver(const std::vector<std::string>& grid,const std::string& input,int& playerX,int& playerY)
+{
+  int targetX=playerX,targetY=playerY;
+
+  if(input == "w")
+  {
+    targetY-=1;
+  }
+  if(input =="s")
+  {
+    targetY+=1;
+  }
+  if(input == "a")
+  {
+    targetX-=1;
+  }
+  if( input =="d")
+  {
+    targetX+=1;
+  }
+
+  if(targetY <0 ||  targetY >=grid.size())
+  {
+    return BLOCKEDBYBOUNDS;
+  }
+  else if( targetX<0 || targetX >=grid[targetY].size()  )
+  {
+    return BLOCKEDBYBOUNDS;
+  }
+  else if(grid[targetY][targetX]=='#')
+  {
+    return BLOCKEDBYWALL;
+  }
+  else
+  {
+    //commit move
+    playerX = targetX;
+    playerY = targetY;
+    return MOVED;
+  }
+
 }
