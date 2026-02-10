@@ -26,6 +26,8 @@ int main()
   int playerX=-1,playerY=-1;
   bool found=false;//flag to check if player is found or not
   bool gameEnd = false;
+  std::string input;//player input
+  //create the grid
   std::vector<std::string> grid = 
   {
     "############",
@@ -40,7 +42,7 @@ int main()
     "############"
   };
   
-  
+  //find initial player position
   for(int i = 0; i < grid.size() && !found;i++)
   {
     for(int j = 0; j < grid[i].size(); j++)//here i is the row  and i am trying to stop at the end of the string which is controlled by i 
@@ -57,45 +59,41 @@ int main()
   if(playerX == -1 || playerY  == -1)
   {
     std::cout << "Player coordinates error!" << std::endl;
-    return 0;
+    return 0; 
   }
   else
   {
     grid[playerY][playerX]='.';//substitute the player with empty space(.)
-    std::cout << "Player Position: " << playerX << "," << playerY << std::endl;
   }
 
-  //print the grid after extracting the player
-  drawGrid(grid);
-  //print a blanck line before reinserting the player
-  std::cout << std::endl;
-  //reinserting the player (modify the vector and reprint the gird)
-  grid[playerY][playerX] = 'P';
-  drawGrid(grid);
-
-  std::string input;
-  std::cout << "W A S D " ;
-  std::cin >> input;
-  std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
   //GAME LOOP 
-    while(input!= "exit" && !gameEnd)
+    do
     {
+      //print a blanck line before reinserting the player
+      std::cout << std::endl;
+      //reinserting the player 
+      grid[playerY][playerX] = 'P';
+      drawGrid(grid);
+      grid[playerY][playerX] = '.';//replacing P with .
+
+      
+      std::cout << "W A S D (or exit): " ;
+      std::cin >> input;
+      std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+
       mvr = movementResolver(grid,input,playerX,playerY);
-      if(mvr == MOVED)
+      if(mvr==BLOCKEDBYWALL)
       {
-        continue;
-      }
-      else if(mvr==BLOCKEDBYWALL)
-      {
-        printf("Blocked By wall!");
+        std::cout << "Blocked By wall!";
       }
       else if(mvr==BLOCKEDBYBOUNDS)
       {
-        printf("Bloced by bounds");
+        std::cout << "Bloced by bounds";
       }
 
-    }
+    }while(input != "exit" && !gameEnd);
   return 0;
 }
 
