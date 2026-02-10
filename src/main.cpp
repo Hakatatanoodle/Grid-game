@@ -11,20 +11,26 @@ enum MovementResult
 {
   MOVED,
   BLOCKEDBYWALL,
-  BLOCKEDBYBOUNDS
+  BLOCKEDBYBOUNDS,
+  HITENEMY
 };
-//constants
+//structs
+struct Entity
+{
+  int x,y;
+};
 
 //function prototypes
 void drawGrid(const std::vector<std::string>& grid);
 
-enum MovementResult movementResolver(const std::vector<std::string>&,const std::string&,int& playerX,int& playerY);
+enum MovementResult movementResolver(const std::vector<std::string>&,const std::string&,Entity&,Entity&);
 
 int main()
 { 
   MovementResult mvr ;
-  int playerX=-1,playerY=-1;
-  bool found=false;//flag to check if player is found or not
+  Entity player, enemy;
+  player.x = -1 , player.y=-1, enemy.x=-1,enemy.y=-1;
+  bool playerFound=false,enemyFound = false;//flag to check if player is found or not
   bool gameEnd = false;
   std::string input;//player input
   //create the grid
@@ -43,27 +49,49 @@ int main()
   };
   
   //find initial player position
-  for(int i = 0; i < grid.size() && !found;i++)
+  for(int i = 0; i < grid.size() && !playerFound;i++)
   {
     for(int j = 0; j < grid[i].size(); j++)//here i is the row  and i am trying to stop at the end of the string which is controlled by i 
     {
       if(grid[i][j] == 'P')
       {
-        playerX  = j;
-        playerY = i;
-        found = true;
+        player.x  = j;
+        player.y = i;
+        playerFound = true;
         break;
       }
     }
   }
-  if(playerX == -1 || playerY  == -1)
+  if(player.x == -1 || player.y == -1)
   {
     std::cout << "Player coordinates error!" << std::endl;
     return 0; 
   }
   else
   {
-    grid[playerY][playerX]='.';//substitute the player with empty space(.)
+    grid[player.y][player.x]='.';//substitute the player with empty space(.)
+  }
+  //find initial enemy position 
+  for(int i=0;i<grid.size() && !enemyFound;i++)
+  {
+    for(int j=0;j<grid[i].size();j++)
+    {
+      if(grid[i][j]=='E')
+      {
+        enemy.x=j;
+        enemy.y=i;
+        enemyFound=true;
+      }
+    }
+  }
+  if(enemy.x==-1 || enemy.y == -1)
+  {
+    std::cout << "Invalid player coordingates"<<std::endl;
+    return 0;
+  }
+  else
+  {
+    grid[enemy.y][enemy.x] = '.';//substitute enemy with empty space . 
   }
 
 
@@ -73,24 +101,30 @@ int main()
       //print a blanck line before reinserting the player
       std::cout << std::endl;
       //reinserting the player 
-      grid[playerY][playerX] = 'P';
+      grid[player.y][player.x] = 'P';
+      grid[enemy.y][enemy.x] = 'E'; //reinsert enemy
       drawGrid(grid);
-      grid[playerY][playerX] = '.';//replacing P with .
+      grid[player.y][player.x] = '.';//replacing P with .
+      grid[enemy.y][enemy.x] = '.';
 
-      
       std::cout << "W A S D (or exit): " ;
       std::cin >> input;
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
 
-      mvr = movementResolver(grid,input,playerX,playerY);
+      mvr = movementResolver(grid,input,player,enemy);
       if(mvr==BLOCKEDBYWALL)
       {
-        std::cout << "Blocked By wall!";
+        std::cout << "Blocked By wall!"<<std::endl;
       }
       else if(mvr==BLOCKEDBYBOUNDS)
       {
-        std::cout << "Bloced by bounds";
+        std::cout << "Bloced by bounds"<<std::endl;
+      }
+      else if(mvr==HITENEMY)
+      {
+        std::cout << "Hit enemy!"<<std::endl;
+        gameEnd = true;
       }
 
     }while(input != "exit" && !gameEnd);
@@ -107,25 +141,25 @@ void drawGrid(const std::vector<std::string>& grid)
 }
 
 //function to resolve movement
-enum MovementResult movementResolver(const std::vector<std::string>& grid,const std::string& input,int& playerX,int& playerY)
+enum MovementResult movementResolver(const std::vector<std::string>& grid,const std::string& input,Entity& player,const Entity& enemy)
 {
-  int targetX=playerX,targetY=playerY;
+  int targetX=player.x,targetY=player.y;
 
-  if(input == "w")
+  if (input == "w")
   {
-    targetY-=1;
+    targetY--;
   }
-  if(input =="s")
+  else if (input == "s")
   {
-    targetY+=1;
+    targetY++;
   }
-  if(input == "a")
+  else if (input == "a")
   {
-    targetX-=1;
+    targetX--;
   }
-  if( input =="d")
+  else if (input == "d")
   {
-    targetX+=1;
+    targetX++;
   }
 
   if(targetY <0 ||  targetY >=grid.size())
@@ -140,11 +174,15 @@ enum MovementResult movementResolver(const std::vector<std::string>& grid,const 
   {
     return BLOCKEDBYWALL;
   }
+  else if(targetX==enemy.x && targetY==enemy.y)
+  {
+    return HITENEMY;
+  }
   else
   {
     //commit move
-    playerX = targetX;
-    playerY = targetY;
+    player.x = targetX;
+    player.y = targetY;
     return MOVED;
   }
 
