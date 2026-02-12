@@ -5,8 +5,6 @@ Turn based Grid game
 #include<vector>
 #include<string>
 #include<limits>
-
-//enum to define the result of movement 
 enum MovementResult
 {
   MOVED,
@@ -21,9 +19,10 @@ struct Entity
 };
 
 //function prototypes
-void drawGrid(const std::vector<std::string>& grid);
+void drawGrid(const std::vector<std::string>& grid,const Entity&,const Entity&);
+void moveEnemy(const std::vector<std::string>&,Entity&,const Entity&);
 
-enum MovementResult movementResolver(const std::vector<std::string>&,const std::string&,Entity&,Entity&);
+enum MovementResult movementResolver(const std::vector<std::string>&,const std::string&,Entity&,const Entity&);
 
 int main()
 { 
@@ -84,7 +83,7 @@ int main()
       }
     }
   }
-  if(enemy.x==-1 || enemy.y == -1)
+  if(enemy.x ==-1 || enemy.y == -1)
   {
     std::cout << "Invalid player coordingates"<<std::endl;
     return 0;
@@ -101,16 +100,12 @@ int main()
       //print a blanck line before reinserting the player
       std::cout << std::endl;
       //reinserting the player 
-      grid[player.y][player.x] = 'P';
-      grid[enemy.y][enemy.x] = 'E'; //reinsert enemy
-      drawGrid(grid);
-      grid[player.y][player.x] = '.';//replacing P with .
-      grid[enemy.y][enemy.x] = '.';
+      drawGrid(grid,player,enemy);
 
+      //player turn 
       std::cout << "W A S D (or exit): " ;
       std::cin >> input;
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
 
       mvr = movementResolver(grid,input,player,enemy);
       if(mvr==BLOCKEDBYWALL)
@@ -127,16 +122,39 @@ int main()
         gameEnd = true;
       }
 
+      //enemyturn 
+      if(!gameEnd)
+      {
+      moveEnemy(grid,enemy,player);
+      if(enemy.x ==player.x && enemy.y == player.y)
+      {
+        std::cout << "Enemy Hit player!" << std::endl;
+        gameEnd = true;
+      }
+      }
+
     }while(input != "exit" && !gameEnd);
   return 0;
 }
 
 
-void drawGrid(const std::vector<std::string>& grid)
+void drawGrid(const std::vector<std::string>& grid,const Entity& player, const Entity& enemy)
 {
-  for (const std::string& row : grid)
+  for(int i =0 ; i < grid.size();i++)
   {
-    std::cout << row<< std::endl;  
+    for(int j = 0; j < grid[i].size();j++)
+    {
+      if(j == player.x && i ==player.y )
+      {
+        std::cout << "P" ;
+      }
+      else if (j==enemy.x && i == enemy.y )
+      {
+        std::cout << "E";
+      }
+      else std::cout<< grid[i][j];
+    }
+    std::cout << std::endl;
   }
 }
 
@@ -185,5 +203,35 @@ enum MovementResult movementResolver(const std::vector<std::string>& grid,const 
     player.y = targetY;
     return MOVED;
   }
+}
 
+void moveEnemy(const std::vector<std::string>& grid,Entity& enemy,const Entity& player)
+{
+  //use mahattan distance to calculate ai movement
+  //first set initial position of the enemy  
+  int targetX = enemy.x;
+  int targetY = enemy.y;
+
+  int dx = player.x - enemy.x;
+  int dy = player.y - enemy.y;
+
+  if(abs(dx)>abs(dy))
+  {
+    targetX+= (dx>0)? 1:-1;
+  }
+  else if(dy!=0)
+  {
+    targetY+= (dy>0)? 1:-1;
+  }
+
+  if (targetY < 0 || targetY >= grid.size())
+    return;
+
+  if (targetX < 0 || targetX >= grid[targetY].size())
+    return;
+
+  //check if grid is walkable
+  if(grid[targetY][targetX] == '#') return ;
+  enemy.x = targetX;
+  enemy.y = targetY;
 }
