@@ -26,12 +26,24 @@ struct Entity
   int health;
 };
 
+struct Treasure
+{
+  int x,y;
+  bool found;
+};
+
 //function prototypes
 void drawGrid(const std::vector<std::string>& grid,const Entity&,const Entity&);
 void moveEnemy(const std::vector<std::string>&,Entity&,const Entity&);
 bool canAttack(const Entity& attacker, const Entity& target);//function to check if the target can be attacked or not
-
 enum MovementResult movementResolver(const std::vector<std::string>&,const std::string&,Entity&);
+Treasure genRandCoordinate()
+{
+  srand(time(NULL));
+  int x = (rand()%10)+1;
+  int y =  (rand()%8)+1;
+  return {x,y,false};
+}
 
 int main()
 { 
