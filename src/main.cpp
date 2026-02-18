@@ -6,6 +6,7 @@ Turn based Grid game
 #include<string>
 #include<limits>
 #include<cmath>
+#include<unistd.h>//for dealing with delayed printing
 enum MovementResult
 {
   MOVED,
@@ -17,7 +18,8 @@ enum MovementResult
 enum ActionType
 {
   ATTACK,
-  MOVE
+  MOVE,
+  DIG
 };
 //structs
 struct Entity
@@ -37,18 +39,13 @@ void drawGrid(const std::vector<std::string>& grid,const Entity&,const Entity&);
 void moveEnemy(const std::vector<std::string>&,Entity&,const Entity&);
 bool canAttack(const Entity& attacker, const Entity& target);//function to check if the target can be attacked or not
 enum MovementResult movementResolver(const std::vector<std::string>&,const std::string&,Entity&);
-Treasure genRandCoordinate()
-{
-  srand(time(NULL));
-  int x = (rand()%10)+1;
-  int y =  (rand()%8)+1;
-  return {x,y,false};
-}
+Treasure genRandCoordinate(const std::vector<std::string>& grid,const Entity&,const Entity&);
 
 int main()
 { 
   MovementResult mvr ;
   Entity player, enemy;
+  Treasure tressure ;
   player.x = -1 , player.y=-1, enemy.x=-1,enemy.y=-1;
   player.health = 3,enemy.health = 3;//setting initial health of player and enemy
   bool playerFound=false,enemyFound = false;//flag to check if player is found or not
@@ -68,6 +65,9 @@ int main()
     "#....E.....#",
     "############"
   };
+
+  //seed srand 
+  srand(time(NULL));
   
   //find initial player position
   for(int i = 0; i < grid.size() && !playerFound;i++)
@@ -107,13 +107,16 @@ int main()
   }
   if(enemy.x ==-1 || enemy.y == -1)
   {
-    std::cout << "Invalid player coordingates"<<std::endl;
+    std::cout << "Invalid player coordinates"<<std::endl;
     return 0;
   }
   else
   {
     grid[enemy.y][enemy.x] = '.';//substitute enemy with empty space . 
   }
+
+  //Generate random treasure position
+  tressure = genRandCoordinate(grid,player,enemy);
 
 
   //GAME LOOP 
@@ -126,7 +129,7 @@ int main()
 
       //player turn 
       std::cout << "Do you want to attack or move?"<<std::endl;
-      std::cout << "Move : m: "<< std::endl << "Attack: a: ";
+      std::cout << "Move : m: "<< std::endl << "Attack: a: "<<std::endl<<"Dig : d"<<std::endl;
       std::cin >> action;
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
@@ -154,8 +157,7 @@ int main()
           enemy.health--;
           if(enemy.health<=0)
           {
-            std::cout << "Enemy is cooked ! You won !"<<std::endl;
-            gameEnd = true;
+            std::cout << "Enemy got hit !"<<std::endl;
           }
           
         }
@@ -163,6 +165,19 @@ int main()
         {
           std::cout << "Enemy not in range!"<<std::endl;
         }
+      }
+      else if(action =="d")
+      {
+        std::cout << "Started digging ..." << sleep(0.5) << "..."<<sleep(0.5)<<".." <<std::endl;
+        if(player.x == tressure.x && player.y == tressure.y)
+          {
+            std::cout << "You found the tressure ! YOU WIN"<<std::endl;
+            gameEnd = true;
+          }
+          else
+          {
+            std::cout << "Nahh , no tressure here " << std::endl;
+          }
       }
 
       //enemyturn 
@@ -175,7 +190,6 @@ int main()
           if(player.health<=0)
           {
             std::cout << "Bruh you got cooked by an stupid AI !"<<std::endl;
-            gameEnd = true;
           }
         }
         else
@@ -299,4 +313,20 @@ bool canAttack(const Entity& attacker, const Entity& target)
     return true;
   }
   return false;
+}
+
+
+Treasure genRandCoordinate(const std::vector<std::string>& grid,const Entity& player,const Entity& enemy)
+{
+  int maxX = grid[0].size()-2;
+  int maxY = grid.size()-2;
+
+  int x,y;
+
+  do
+  {
+  x = (rand()%maxX)+1;
+  y = (rand()%maxY)+1;
+  }while((x==player.x && y == player.y)||(x==enemy.x && y== enemy.y) || grid[y][x]!='.');
+  return {x,y,false};
 }
