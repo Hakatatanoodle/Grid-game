@@ -21,6 +21,14 @@ enum ActionType
   MOVE,
   DIG
 };
+
+enum treasureDistanceFeedback
+{
+  VERYHOT,//suggesting that the treasure is below the entity tile i.e WIN
+  HOT,
+  MILD,
+  COLD
+};
 //structs
 struct Entity
 {
@@ -40,12 +48,15 @@ void moveEnemy(const std::vector<std::string>&,Entity&,const Entity&);
 bool canAttack(const Entity& attacker, const Entity& target);//function to check if the target can be attacked or not
 enum MovementResult movementResolver(const std::vector<std::string>&,const std::string&,Entity&);
 Treasure genRandCoordinate(const std::vector<std::string>& grid,const Entity&,const Entity&);
+treasureDistanceFeedback proximityFeedback(const Entity&,const Treasure&);
+
 
 int main()
 { 
   MovementResult mvr ;
+  treasureDistanceFeedback feedback;
   Entity player, enemy;
-  Treasure tressure ;
+  Treasure treasure;
   player.x = -1 , player.y=-1, enemy.x=-1,enemy.y=-1;
   player.health = 3,enemy.health = 3;//setting initial health of player and enemy
   bool playerFound=false,enemyFound = false;//flag to check if player is found or not
@@ -116,7 +127,7 @@ int main()
   }
 
   //Generate random treasure position
-  tressure = genRandCoordinate(grid,player,enemy);
+  treasure = genRandCoordinate(grid,player,enemy);
 
 
   //GAME LOOP 
@@ -129,11 +140,11 @@ int main()
 
       //player turn 
       std::cout << "Do you want to attack or move?"<<std::endl;
-      std::cout << "Move : m: "<< std::endl << "Attack: a: "<<std::endl<<"Dig : d"<<std::endl;
+      std::cout << "Move : e: "<< std::endl << "Attack: a: "<<std::endl<<"Dig : d"<<std::endl;
       std::cin >> action;
       std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-      if(action =="m")
+      if(action =="e")
       {
         std::string direction;
         std::cout << "Choose direction to move: (w a s d ):" ;
@@ -168,16 +179,25 @@ int main()
       }
       else if(action =="d")
       {
-        std::cout << "Started digging ..." << sleep(0.5) << "..."<<sleep(0.5)<<".." <<std::endl;
-        if(player.x == tressure.x && player.y == tressure.y)
-          {
-            std::cout << "You found the tressure ! YOU WIN"<<std::endl;
-            gameEnd = true;
-          }
-          else
-          {
-            std::cout << "Nahh , no tressure here " << std::endl;
-          }
+        std::cout << "Started digging ..." <<std::endl;
+        feedback = proximityFeedback(player,treasure);
+        if(feedback == VERYHOT)
+        {
+          std::cout << "Yohooo, you found the treasure!!! YOU WIN"<<std::endl;
+          gameEnd = true;
+        }
+        else if(feedback == HOT)
+        {
+          std::cout << "NO treasure was found !"<<std::endl<<"HOT"<<std::endl;
+        }
+        else if(feedback == MILD)
+        {
+          std::cout << "NO treasure was found !"<<std::endl<<"MILD"<<std::endl;
+        }
+        else if(feedback == COLD)
+        {
+          std::cout << "NO treasure was found !"<<std::endl<<"COLD"<<std::endl;
+        }
       }
 
       //enemyturn 
@@ -329,4 +349,16 @@ Treasure genRandCoordinate(const std::vector<std::string>& grid,const Entity& pl
   y = (rand()%maxY)+1;
   }while((x==player.x && y == player.y)||(x==enemy.x && y== enemy.y) || grid[y][x]!='.');
   return {x,y,false};
+}
+
+treasureDistanceFeedback proximityFeedback(const Entity& entity,const Treasure& treasure)
+{
+  int distance = 0;
+  //calculate the distance between player and treasure
+  distance = abs(treasure.x-entity.x)+abs(treasure.y-entity.y);
+
+  if(distance == 0) return VERYHOT;
+  else if(distance <=2) return HOT;
+  else if(distance <=5) return MILD;
+  else return COLD;
 }
